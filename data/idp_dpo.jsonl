@@ -1,0 +1,1 @@
+{"prompt": "Invoice text: INV-77, date 2025-08-01, vendor Foo Ltd., total INR 999.00.", "chosen": "{\"invoice_number\":\"INV-77\",\"invoice_date\":\"2025-08-01\",\"vendor_name\":\"Foo Ltd.\",\"total_amount\":999.0,\"currency\":\"INR\",\"line_items\":[]}", "rejected": "{\"invoice\":\"77\",\"date\":\"2025/08/01\",\"vendor\":\"Foo\",\"amount\":\"INR Nine Hundred\"}"}

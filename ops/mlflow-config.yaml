@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mlflow-config
+  namespace: kubeflow # IMPORTANT: This lives in 'kubeflow' so your pipeline can read it
+data:
+  # The key (MLFLOW_TRACKING_URI) will become the environment variable name.
+  # The value is the URI of your MLflow server in the OTHER namespace.
+  MLFLOW_TRACKING_URI: "http://mlflow-service.mlflow.svc.cluster.local:5000"

@@ -1,0 +1,133 @@
+flowchart LR
+  %% Distill SLM Accelerator Data Flow
+
+  %% Sources
+  RAW_CMX[creditmix_dataset json]
+  RAW_CODE_SFT[codegen_sft jsonl]
+  RAW_CODE_KD[codegen_kd jsonl]
+  RAW_CODE_DPO[codegen_dpo jsonl]
+  RAW_IDP[ idp_sft jsonl ]
+  IDP_SCHEMA[idp_schema json]
+
+  %% Preparation
+  PREP_BAL[creditmix_prepare py]
+  CMX_SFT[data creditmix_sft jsonl]
+  CMX_KD[data creditmix_kd jsonl]
+  CMX_DPO[data creditmix_dpo jsonl]
+
+  %% Base Models
+  BASE_INSTRUCT[Qwen Qwen2 5 3B Instruct]
+  BASE_CODER[Qwen Qwen2 5 Coder 3B]
+
+  %% Training Pipelines
+  T_SFT[sft_train py]
+  T_KD[kd_train py]
+  T_DPO[dpo_train py]
+
+  %% Trained Artifacts
+  ADAPT_SFT[runs creditmix_sft adapter]
+  ADAPT_KD[runs creditmix_kd adapter]
+  ADAPT_DPO[runs creditmix_dpo adapter]
+
+  %% Inference Paths
+  INF_CODE[infer_codegen py]
+  INF_IDP[infer_idp py]
+  INF_CMX[infer_creditmix py]
+
+  %% Evaluation
+  EVAL_CMX[eval_creditmix py]
+
+  %% Serving
+  SERVE[serve_creditmix py]
+  API_BASE[api infer base]
+  API_SFT[api infer sft]
+  API_KD[api infer kd]
+  API_DPO[api infer dpo]
+
+  %% Outputs
+  PRED_CODE[generated code output]
+  PRED_IDP[json extraction output]
+  PRED_CMX[label prediction good standard bad]
+  METRICS[accuracy macro f1 report confusion matrix]
+  LOGS[training and inference logs]
+
+  %% ----------------- Edges -----------------
+
+  %% Raw to Prep
+  RAW_CMX --> PREP_BAL
+  PREP_BAL --> CMX_SFT
+  PREP_BAL --> CMX_KD
+  PREP_BAL --> CMX_DPO
+
+  %% Raw direct for other tasks
+  RAW_CODE_SFT --> T_SFT
+  RAW_CODE_KD  --> T_KD
+  RAW_CODE_DPO --> T_DPO
+  RAW_IDP      --> T_SFT
+  IDP_SCHEMA   --> INF_IDP
+
+  %% Training inputs
+  CMX_SFT --> T_SFT
+  CMX_KD  --> T_KD
+  CMX_DPO --> T_DPO
+
+  %% Base models into training
+  BASE_INSTRUCT --> T_SFT
+  BASE_INSTRUCT --> T_KD
+  BASE_INSTRUCT --> T_DPO
+  BASE_CODER    --> T_SFT
+  BASE_CODER    --> T_KD
+  BASE_CODER    --> T_DPO
+
+  %% Training outputs
+  T_SFT --> ADAPT_SFT
+  T_KD  --> ADAPT_KD
+  T_DPO --> ADAPT_DPO
+
+  %% Inference bindings
+  ADAPT_SFT --> INF_CODE
+  ADAPT_KD  --> INF_CODE
+  ADAPT_DPO --> INF_CODE
+
+  ADAPT_SFT --> INF_IDP
+  ADAPT_KD  --> INF_IDP
+  ADAPT_DPO --> INF_IDP
+
+  BASE_INSTRUCT --> INF_CMX
+  ADAPT_SFT     --> INF_CMX
+  ADAPT_KD      --> INF_CMX
+  ADAPT_DPO     --> INF_CMX
+
+  %% Inference outputs
+  INF_CODE --> PRED_CODE
+  INF_IDP  --> PRED_IDP
+  INF_CMX  --> PRED_CMX
+
+  %% Evaluation
+  RAW_CMX  --> EVAL_CMX
+  ADAPT_SFT --> EVAL_CMX
+  ADAPT_KD  --> EVAL_CMX
+  ADAPT_DPO --> EVAL_CMX
+  BASE_INSTRUCT --> EVAL_CMX
+  EVAL_CMX --> METRICS
+
+  %% Serving data flow
+  SERVE --> API_BASE
+  SERVE --> API_SFT
+  SERVE --> API_KD
+  SERVE --> API_DPO
+
+  API_BASE --> PRED_CMX
+  API_SFT  --> PRED_CMX
+  API_KD   --> PRED_CMX
+  API_DPO  --> PRED_CMX
+
+  %% Logging
+  T_SFT --> LOGS
+  T_KD  --> LOGS
+  T_DPO --> LOGS
+  INF_CODE --> LOGS
+  INF_IDP  --> LOGS
+  INF_CMX  --> LOGS
+  EVAL_CMX --> LOGS
+  SERVE    --> LOGS

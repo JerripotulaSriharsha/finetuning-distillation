@@ -1,0 +1,38 @@
+name: Model Eval
+description: Used to evaluate trained models
+inputs:
+  - {name: model_dir, type: String, description: 'PVC path where the trained model is stored'}
+  - {name: data, type: String, description: 'Path to test data JSONL file'}
+  - {name: training_type, type: String, description: 'Type of training approach (dpo, kd, or sft)'}
+  - {name: base_model, type: String, description: 'Base model used for training (optional, will be inferred if not provided)'}
+  - {name: max_len, type: Integer, description: 'Maximum sequence length for tokenization', default: 2048}
+  - {name: max_new_tokens, type: Integer, description: 'Maximum number of new tokens to generate', default: 512}
+  - {name: val_per_class, type: Integer, description: 'Number of validation examples per class (0 for all)', default: 0}
+  - {name: offload_folder, type: String, description: 'Folder to offload model weights (optional)'}
+  - {name: idp_mode, type: Boolean, description: 'Whether the model was trained in IDP mode', default: false}
+  - {name: output_file, type: String, description: 'Path to save evaluation results (optional, will be auto-generated if not provided)', default: ''}
+  - {name: mlflow_experiment_name, type: String, description: 'MLflow experiment name', default: 'model_evaluation'}
+
+outputs:
+  - {name: output_path, type: String, description: 'JSON file path with evaluation results'}
+
+implementation:
+  container:
+    image: narwal-ai/finetuning-distillation:infer_codegen_model-1.0
+    command: [
+        python3,
+        eval_model.py,
+    ]
+    args: [
+      --model_dir, {inputValue: model_dir},
+      --data, {inputValue: data},
+      --training_type, {inputValue: training_type},
+      --base_model, {inputValue: base_model},
+      --max_len, {inputValue: max_len},
+      --max_new_tokens, {inputValue: max_new_tokens},
+      --val_per_class, {inputValue: val_per_class},
+      --offload_folder, {inputValue: offload_folder},
+      --idp_mode, {inputValue: idp_mode},
+      --output_file, {inputValue: output_file},
+      --mlflow_experiment_name, {inputValue: mlflow_experiment_name}
+    ]

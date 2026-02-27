@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: model-storage
+  namespace: kubeflow
+spec:
+  accessModes:
+    - ReadWriteMany   # allows multiple pods to read/write
+  resources:
+    requests:
+      storage: 10Gi   # adjust as needed
+  storageClassName: standard

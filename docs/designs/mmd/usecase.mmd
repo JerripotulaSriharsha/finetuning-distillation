@@ -1,0 +1,116 @@
+flowchart LR
+  %% Distill SLM Accelerator Use Case Diagram
+
+  %% === Actors ===
+  subgraph ACTORS[Actors]
+    DS[Data scientist]
+    MLE[ML engineer]
+    BE[Backend developer]
+    PM[Product manager]
+    OPS[Ops engineer]
+    APP[End user app]
+  end
+
+  %% === Use cases ===
+  subgraph DATA[Data management]
+    UC_PREP(Prepare creditmix balanced data)
+    UC_CONVERT(Prepare codegen and idp jsonl)
+  end
+
+  subgraph TRAIN[Model training]
+    UC_SFT(Train sft with qlora)
+    UC_KD(Train kd with qlora)
+    UC_DPO(Train dpo with qlora)
+  end
+
+  subgraph INFER[Inference cli]
+    UC_INF_CMX(Infer creditmix label)
+    UC_INF_CODE(Generate code from prompt)
+    UC_INF_IDP(Extract json from document)
+  end
+
+  subgraph EVAL[Evaluation]
+    UC_EVAL_CMX(Evaluate creditmix balanced split)
+    UC_REPORT(View metrics and confusion matrix)
+  end
+
+  subgraph SERVE[Serving api]
+    UC_SRV_BASE(Serve base model endpoint)
+    UC_SRV_SFT(Serve sft adapter endpoint)
+    UC_SRV_KD(Serve kd adapter endpoint)
+    UC_SRV_DPO(Serve dpo adapter endpoint)
+  end
+
+  subgraph RUNTIME[Runtime features]
+    UC_Q4BIT(Use 4bit quant and lora)
+    UC_PRIORS(Compute multi null priors)
+    UC_CAL(Apply calibrated label ranking)
+    UC_OFFLOAD(Enable cpu offload for low vram)
+  end
+
+  %% === Associations ===
+  %% Data workflows
+  DS --> UC_PREP
+  DS --> UC_CONVERT
+  MLE --> UC_PREP
+  MLE --> UC_CONVERT
+
+  %% Training
+  DS --> UC_SFT
+  DS --> UC_KD
+  DS --> UC_DPO
+  MLE --> UC_SFT
+  MLE --> UC_KD
+  MLE --> UC_DPO
+  UC_Q4BIT --- UC_SFT
+  UC_Q4BIT --- UC_KD
+  UC_Q4BIT --- UC_DPO
+
+  %% Inference
+  DS --> UC_INF_CMX
+  DS --> UC_INF_CODE
+  DS --> UC_INF_IDP
+  MLE --> UC_INF_CMX
+  UC_CAL --- UC_INF_CMX
+  UC_PRIORS --- UC_INF_CMX
+  UC_Q4BIT --- UC_INF_CODE
+  UC_Q4BIT --- UC_INF_IDP
+
+  %% Evaluation
+  DS --> UC_EVAL_CMX
+  PM --> UC_REPORT
+  MLE --> UC_EVAL_CMX
+  UC_CAL --- UC_EVAL_CMX
+  UC_PRIORS --- UC_EVAL_CMX
+
+  %% Serving
+  BE --> UC_SRV_BASE
+  BE --> UC_SRV_SFT
+  BE --> UC_SRV_KD
+  BE --> UC_SRV_DPO
+  OPS --> UC_SRV_BASE
+  OPS --> UC_SRV_SFT
+  OPS --> UC_SRV_KD
+  OPS --> UC_SRV_DPO
+  APP --> UC_SRV_BASE
+  APP --> UC_SRV_SFT
+  APP --> UC_SRV_KD
+  APP --> UC_SRV_DPO
+  UC_OFFLOAD --- UC_SRV_BASE
+  UC_OFFLOAD --- UC_SRV_SFT
+  UC_OFFLOAD --- UC_SRV_KD
+  UC_OFFLOAD --- UC_SRV_DPO
+
+  %% Cross links
+  UC_PREP --> UC_SFT
+  UC_PREP --> UC_KD
+  UC_PREP --> UC_DPO
+  UC_CONVERT --> UC_SFT
+  UC_CONVERT --> UC_KD
+  UC_CONVERT --> UC_DPO
+  UC_SFT --> UC_INF_CMX
+  UC_KD  --> UC_INF_CMX
+  UC_DPO --> UC_INF_CMX
+  UC_SFT --> UC_SRV_SFT
+  UC_KD  --> UC_SRV_KD
+  UC_DPO --> UC_SRV_DPO

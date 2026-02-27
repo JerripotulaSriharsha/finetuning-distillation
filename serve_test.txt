@@ -1,0 +1,106 @@
+(llm) aniket@MSI:~/distill_slm$ export OFFLOAD_FOLDER=/home/aniket/distill_slm/offload
+(llm) aniket@MSI:~/distill_slm$ uvicorn serve_creditmix:app --host 0.0.0.0 --port 8000
+INFO:     Started server process [38939]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+Loading checkpoint shards: 100%|██████████████████████████████████████████████████████████████████████████████████████████████| 2/2 [00:10<00:00,  5.07s/it]
+INFO:     127.0.0.1:39528 - "POST /infer/base HTTP/1.1" 200 OK
+Loading checkpoint shards: 100%|██████████████████████████████████████████████████████████████████████████████████████████████| 2/2 [00:00<00:00, 18.03it/s]
+INFO:     127.0.0.1:39292 - "POST /infer/sft HTTP/1.1" 200 OK
+Loading checkpoint shards: 100%|██████████████████████████████████████████████████████████████████████████████████████████████| 2/2 [00:00<00:00, 14.94it/s]
+INFO:     127.0.0.1:40224 - "POST /infer/kd HTTP/1.1" 200 OK
+
+
+
+
+
+
+(llm) aniket@MSI:~/distill_slm$ curl -s -X POST http://localhost:8000/infer/base -H "Content-Type: application/json" \
+  -d '{"features":"Age: 23.0, Occupation: Scientist, Annual Income: 19114.12, Outstanding Debt: 809.98, Credit Utilization Ratio: 35.03, Payment Behaviour: Low_spent_Small_value_payments"}' | jq
+{
+  "model_name": "Qwen/Qwen2.5-3B-Instruct",
+  "prediction": "Standard",
+  "scores": {
+    "Good": -1.3392857142857144,
+    "Standard": 1.2190290178571428,
+    "Bad": -0.9034598214285714
+  },
+  "raw_scores": {
+    "Good": -3.78125,
+    "Standard": -0.275390625,
+    "Bad": -1.5234375
+  },
+  "prior": {
+    "Good": -2.4419642857142856,
+    "Standard": -1.4944196428571428,
+    "Bad": -0.6199776785714286
+  },
+  "probabilities": {
+    "Good": 0.06468190283292168,
+    "Standard": 0.8353043801933099,
+    "Bad": 0.10001371697376847
+  },
+  "top2_margin": 2.1224888392857144
+}
+(llm) aniket@MSI:~/distill_slm$
+(llm) aniket@MSI:~/distill_slm$
+(llm) aniket@MSI:~/distill_slm$
+(llm) aniket@MSI:~/distill_slm$ curl -s -X POST http://localhost:8000/infer/sft  -H "Content-Type: application/json" \
+  -d '{"features":"Age: 23.0, Occupation: Scientist, Annual Income: 19114.12, Outstanding Debt: 809.98, Credit Utilization Ratio: 35.03, Payment Behaviour: Low_spent_Small_value_payments"}' | jq
+{
+  "model_name": "runs/creditmix_sft",
+  "prediction": "Good",
+  "scores": {
+    "Good": 2.0770089285714284,
+    "Standard": -0.7801339285714286,
+    "Bad": -7.352678571428571
+  },
+  "raw_scores": {
+    "Good": -0.3125,
+    "Standard": -1.3125,
+    "Bad": -9.0625
+  },
+  "prior": {
+    "Good": -2.3895089285714284,
+    "Standard": -0.5323660714285714,
+    "Bad": -1.7098214285714286
+  },
+  "probabilities": {
+    "Good": 0.9456149213144531,
+    "Standard": 0.05430914174963094,
+    "Bad": 0.00007593693591605525
+  },
+  "top2_margin": 2.8571428571428568
+}
+(llm) aniket@MSI:~/distill_slm$
+(llm) aniket@MSI:~/distill_slm$
+(llm) aniket@MSI:~/distill_slm$
+(llm) aniket@MSI:~/distill_slm$ curl -s -X POST http://localhost:8000/infer/kd   -H "Content-Type: application/json" \
+  -d '{"features":"Age: 23.0, Occupation: Scientist, Annual Income: 19114.12, Outstanding Debt: 809.98, Credit Utilization Ratio: 35.03, Payment Behaviour: Low_spent_Small_value_payments"}' | jq
+{
+  "model_name": "runs/creditmix_kd",
+  "prediction": "Bad",
+  "scores": {
+    "Good": -1.6205357142857144,
+    "Standard": -0.2345145089285714,
+    "Bad": 0.9423130580357142
+  },
+  "raw_scores": {
+    "Good": -5.21875,
+    "Standard": -0.98046875,
+    "Bad": -0.48046875
+  },
+  "prior": {
+    "Good": -3.5982142857142856,
+    "Standard": -0.7459542410714286,
+    "Bad": -1.4227818080357142
+  },
+  "probabilities": {
+    "Good": 0.05564325990462114,
+    "Standard": 0.22251225081286485,
+    "Bad": 0.721844489282514
+  },
+  "top2_margin": 1.1768275669642856
+}
+(llm) aniket@MSI:~/distill_slm$

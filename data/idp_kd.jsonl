@@ -1,0 +1,1 @@
+{"input": "Invoice #INV-001 dated 2025-09-12 from Acme Co. Total: USD 1234.50.", "teacher_output": "{\"invoice_number\":\"INV-001\",\"invoice_date\":\"2025-09-12\",\"vendor_name\":\"Acme Co.\",\"total_amount\":1234.50,\"currency\":\"USD\",\"line_items\":[]}"}

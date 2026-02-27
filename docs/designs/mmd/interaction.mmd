@@ -1,0 +1,136 @@
+flowchart LR
+  %% Distill SLM Accelerator Interaction Diagram
+
+  %% === Swimlanes ===
+  subgraph USER[User]
+    U1[CLI commands]
+    U2[HTTP client curl or app]
+  end
+
+  subgraph DATA[Data store]
+    D1[creditmix_dataset json]
+    D2[prepared jsonl sft kd dpo]
+    D3[idp_schema json]
+    D4[runs adapters sft kd dpo]
+    D5[logs and metrics]
+  end
+
+  subgraph TRAINERS[Trainers]
+    T1[sft_train py]
+    T2[kd_train py]
+    T3[dpo_train py]
+  end
+
+  subgraph INFER_CLI[Inference scripts CLI]
+    I1[infer_creditmix py]
+    I2[infer_codegen py]
+    I3[infer_idp py]
+  end
+
+  subgraph EVAL[Evaluator]
+    E1[eval_creditmix py]
+  end
+
+  subgraph SERVER[FastAPI server]
+    S0[serve_creditmix py]
+    S1[POST infer base]
+    S2[POST infer sft]
+    S3[POST infer kd]
+    S4[POST infer dpo]
+  end
+
+  subgraph RUNTIME[Runtime and models]
+    M0[base model qwen instruct]
+    M1[base model qwen coder]
+    L0[model loader and cache]
+    P0[prior cache multi null]
+    G0[gpu runtime 4bit qlora]
+  end
+
+  %% === Interactions: Train ===
+  U1 -->|run train command| T1
+  U1 -->|run train command| T2
+  U1 -->|run train command| T3
+
+  D2 -->|read prepared data| T1
+  D2 -->|read prepared data| T2
+  D2 -->|read prepared data| T3
+
+  M0 -->|init student| T1
+  M0 -->|init student| T2
+  M0 -->|init student| T3
+  M1 -->|init student codegen| T1
+  M1 -->|init student codegen| T2
+  M1 -->|init student codegen| T3
+
+  T1 -->|train qlora on gpu| G0
+  T2 -->|train qlora on gpu| G0
+  T3 -->|train qlora on gpu| G0
+
+  T1 -->|save adapter| D4
+  T2 -->|save adapter| D4
+  T3 -->|save adapter| D4
+  T1 -->|write logs| D5
+  T2 -->|write logs| D5
+  T3 -->|write logs| D5
+
+  %% === Interactions: Evaluate ===
+  U1 -->|run eval command| E1
+  D1 -->|load dataset| E1
+  D4 -->|load adapter optional| E1
+  M0 -->|load base optional| E1
+  E1 -->|load model via loader| L0
+  L0 -->|allocate and quantize| G0
+
+  E1 -->|build null prompts| P0
+  E1 -->|compute priors on gpu| G0
+  P0 -->|cache priors| E1
+
+  E1 -->|score labels calibrated| G0
+  E1 -->|write metrics| D5
+
+  %% === Interactions: Inference CLI ===
+  U1 -->|infer creditmix features| I1
+  U1 -->|infer codegen prompt| I2
+  U1 -->|infer idp document| I3
+
+  I1 -->|load model via loader| L0
+  I2 -->|load model via loader| L0
+  I3 -->|load model via loader| L0
+
+  L0 -->|allocate and quantize| G0
+  I1 -->|get or build priors| P0
+  I1 -->|score labels calibrated| G0
+  I2 -->|generate code| G0
+  I3 -->|json schema constrained gen| G0
+  I1 -->|print label| U1
+  I2 -->|print code| U1
+  I3 -->|print json| U1
+
+  %% === Interactions: Serving API ===
+  U2 -->|http post features| S1
+  U2 -->|http post features| S2
+  U2 -->|http post features| S3
+  U2 -->|http post features| S4
+
+  S0 -. manages .-> S1
+  S0 -. manages .-> S2
+  S0 -. manages .-> S3
+  S0 -. manages .-> S4
+
+  S1 -->|resolve model base| L0
+  S2 -->|resolve model sft| L0
+  S3 -->|resolve model kd| L0
+  S4 -->|resolve model dpo| L0
+
+  L0 -->|reuse or load tokenizer model| G0
+  S0 -->|get or compute priors| P0
+  S0 -->|score labels calibrated| G0
+  S0 -->|respond json prediction and scores| U2
+
+  %% === Data transforms and prep entrypoint ===
+  U1 -->|prepare balanced creditmix| D2
+  D1 -->|source for prepare script| D2
+  D2 -->|feeds trainers and eval| TRAINERS
+  D2 -->|feeds inference if needed| INFER_CLI
+  D3 -->|used by idp inference| I3

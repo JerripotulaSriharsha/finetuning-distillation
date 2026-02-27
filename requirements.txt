@@ -1,0 +1,16 @@
+torch
+transformers>=4.43
+accelerate>=1.0.0
+datasets
+bitsandbytes
+peft
+trl
+evaluate
+tiktoken
+einops
+outlines
+scikit-learn==1.7.2
+fastapi
+uvicorn
+mlflow
+boto3

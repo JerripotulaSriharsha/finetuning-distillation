@@ -1,0 +1,57 @@
+graph TD
+    A[Start Pipeline] --> B{Flow Type?}
+    
+    B -->|IDP| C[IDP Flow]
+    B -->|CodeGen| D[CodeGen Flow]
+    
+    C --> E{Training Type?}
+    D --> F{Training Type?}
+    
+    E -->|SFT| G[SFT Training]
+    E -->|KD| H[KD Training]
+    E -->|DPO| I[DPO Training]
+    
+    F -->|SFT| J[SFT Training]
+    F -->|KD| K[KD Training]
+    F -->|DPO| L[DPO Training]
+    
+    G --> M[Model Evaluation]
+    H --> N[Model Evaluation]
+    I --> O[Model Evaluation]
+    
+    J --> P[Model Evaluation]
+    K --> Q[Model Evaluation]
+    L --> R[Model Evaluation]
+    
+    M --> S[IDP Inference]
+    N --> S
+    O --> S
+    
+    P --> T[CodeGen Inference]
+    Q --> T
+    R --> T
+    
+    S --> U[End Pipeline]
+    T --> U
+    
+    style A fill:#e1f5fe
+    style B fill:#fff3e0
+    style C fill:#f3e5f5
+    style D fill:#e8f5e9
+    style E fill:#fff3e0
+    style F fill:#fff3e0
+    style G fill:#e3f2fd
+    style H fill:#e3f2fd
+    style I fill:#e3f2fd
+    style J fill:#e3f2fd
+    style K fill:#e3f2fd
+    style L fill:#e3f2fd
+    style M fill:#e8f5e9
+    style N fill:#e8f5e9
+    style O fill:#e8f5e9
+    style P fill:#e8f5e9
+    style Q fill:#e8f5e9
+    style R fill:#e8f5e9
+    style S fill:#fce4ec
+    style T fill:#fce4ec
+    style U fill:#e1f5fe

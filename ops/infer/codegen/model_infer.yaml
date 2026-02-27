@@ -1,0 +1,18 @@
+name : Infer Codegen Model
+description : Used to infer codegen models
+inputs :
+  - {name: model_dir , type : String , description: 'Model name'}
+  - {name: prompt ,type : String, description: 'prompt'}
+outputs:
+  - {name: output_path , type : String , description: 'Json File Path'}
+implementation :
+  container :
+    image: narwal-ai/finetuning-distillation:infer_codegen_model-1.0
+    command: [
+        python3,
+        infer_codegen.py,
+    ]
+    args: [
+      --model_dir, {inputValue: model_dir},
+      --prompt , {inputValue: prompt}
+    ]

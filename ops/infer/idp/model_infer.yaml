@@ -1,0 +1,20 @@
+name : Infer IDP Model
+description : Used to infer IDP models
+inputs :
+  - {name: model_dir , type : String , description: 'Model name'}
+  - {name: schema , type : String , description: 'Schema'}
+  - {name: document , type : String , description: 'document'}
+outputs:
+  - {name: output_path , type : String , description: 'Json File Path'}
+implementation :
+  container :
+    image: narwal-ai/finetuning-distillation:infer_idp_model-1.0
+    command: [
+        python3,
+        infer_idp.py,
+    ]
+    args: [
+      --model_dir, {inputValue: model_dir},
+      --schema , {inputValue: schema},
+      --document , {inputValue: document},
+    ]

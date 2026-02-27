@@ -1,0 +1,2 @@
+{"input": "Write a function add(a, b) that returns the sum.", "teacher_output": "<CODE>\ndef add(a, b):\n    return a + b\n</CODE>"}
+{"input": "Reverse a string in Python.", "teacher_output": "<CODE>\ndef reverse(s: str) -> str:\n    return s[::-1]\n</CODE>"}

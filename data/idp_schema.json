@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "InvoiceExtraction",
+  "type": "object",
+  "properties": {
+    "invoice_number": {
+      "type": "string"
+    },
+    "invoice_date": {
+      "type": "string"
+    },
+    "vendor_name": {
+      "type": "string"
+    },
+    "total_amount": {
+      "type": "number"
+    },
+    "currency": {
+      "type": "string"
+    },
+    "line_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "qty": {
+            "type": "number"
+          },
+          "unit_price": {
+            "type": "number"
+          },
+          "amount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "description",
+          "qty",
+          "unit_price",
+          "amount"
+        ]
+      }
+    }
+  },
+  "required": [
+    "invoice_number",
+    "invoice_date",
+    "vendor_name",
+    "total_amount",
+    "currency"
+  ]
+}

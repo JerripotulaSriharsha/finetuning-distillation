@@ -1,0 +1,78 @@
+# mlflow-deployment.yaml
+
+# --- 1. Persistent Storage for MLflow Data ---
+# This creates a persistent disk to store your experiment data (the "mlruns" folder).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mlflow-pvc
+  namespace: mlflow  # IMPORTANT: This tells it to live in the 'mlflow' namespace
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi # You can increase this if you need more space
+  # IMPORTANT: 'standard' is the default storage class in many clusters (like GKE, Minikube).
+  # If you get an error, you may need to run 'kubectl get storageclass' to find the correct name.
+  storageClassName: standard
+
+---
+# --- 2. The MLflow Server Application ---
+# This defines the MLflow server itself.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlflow-deployment
+  namespace: mlflow  # IMPORTANT: This also lives in the 'mlflow' namespace
+  labels:
+    app: mlflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mlflow
+  template:
+    metadata:
+      labels:
+        app: mlflow
+    spec:
+      containers:
+      - name: mlflow-server
+        image: python:3.9-slim
+        # This command installs MLflow and then starts the server
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            pip install mlflow && \
+            mlflow server \
+              --host 0.0.0.0 \
+              --port 5000 \
+              --default-artifact-root /mlruns
+        ports:
+        - containerPort: 5000
+        # This mounts the persistent disk into the container
+        volumeMounts:
+        - name: mlflow-storage
+          mountPath: /mlruns
+      volumes:
+      - name: mlflow-storage
+        persistentVolumeClaim:
+          claimName: mlflow-pvc
+
+---
+# --- 3. The Network Endpoint for MLflow ---
+# This creates a stable network address (a "Service") so other pods can find MLflow.
+apiVersion: v1
+kind: Service
+metadata:
+  name: mlflow-service
+  namespace: mlflow  # IMPORTANT: This also lives in the 'mlflow' namespace
+spec:
+  selector:
+    app: mlflow
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+  type: ClusterIP # This makes it accessible only within the cluster, which is secure.

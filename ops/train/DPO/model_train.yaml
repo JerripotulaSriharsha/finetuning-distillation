@@ -1,0 +1,23 @@
+name : DPO Model train
+description : To train the sft model
+inputs :
+  - {name: student , type : String , description: 'Model name'}
+  - {name: data , type : String , description: 'Finetune dataset'}
+  - {name: save_dir, type: String , description: 'Model Save Dir'}
+  - {name: epochs , type : Integer , description: 'No of epochs'}
+outputs:
+  - {name: output_path , type : String , description: 'Json File Path'}
+implementation :
+  container :
+    image: narwal-ai/finetuning-distillation:DPO_model_train-1.0
+    command: [
+        python3,
+        dpo_train.py,
+    ]
+    args: [
+      --student, {inputValue: student},
+      --data , {inputValue: data},
+      --save_dir, {inputValue: save_dir},
+      --epochs, {inputValue: epochs},
+    ]
+

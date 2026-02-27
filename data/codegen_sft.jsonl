@@ -1,0 +1,1 @@
+{"input": "Write a function to check if a number is prime.", "output": "<PLAN>\n- Handle n<2\n- Check divisors up to sqrt(n)\n</PLAN>\n<CODE>\nimport math\ndef is_prime(n:int)->bool:\n    if n<2: return False\n    r=int(math.isqrt(n))\n    for d in range(2,r+1):\n        if n%d==0: return False\n    return True\n</CODE>"}

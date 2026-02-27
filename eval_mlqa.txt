@@ -1,0 +1,113 @@
+(llm) aniket@MSI:~/distill_slm$ python eval_creditmix.py --model_dir Qwen/Qwen2.5-3B-Instruct --data data/creditmix_dataset.json --val_per_class 1500
+Loading checkpoint shards: 100%|██████████████████████████████████████████████████████████████████████████████████████████████| 2/2 [00:10<00:00,  5.08s/it]
+Original distribution: {'Good': 9689, 'Standard': 14591, 'Bad': 7588}
+Balanced validation per class: 1500  (total 4500)
+Label distribution (val true): Counter({'Good': 1500, 'Standard': 1500, 'Bad': 1500})
+Label distribution (val pred): Counter({'Standard': 2570, 'Bad': 1304, 'Good': 626})
+Accuracy: 0.3562
+Macro F1: 0.3404
+
+Classification Report: y_true, y_pred...
+              precision    recall  f1-score   support
+
+         Bad     0.3673    0.3193    0.3417      1500
+        Good     0.4521    0.1887    0.2662      1500
+    Standard     0.3272    0.5607    0.4133      1500
+
+    accuracy                         0.3562      4500
+   macro avg     0.3822    0.3562    0.3404      4500
+weighted avg     0.3822    0.3562    0.3404      4500
+
+Confusion Matrix: Good, Standard, Bad...
+[[283 855 362]
+ [196 841 463]
+ [147 874 479]]
+
+
+
+
+
+(llm) aniket@MSI:~/distill_slm$ python eval_creditmix.py --model_dir runs/creditmix_sft --data data/creditmix_dataset.json --val_per_class 1500
+Loading checkpoint shards: 100%|██████████████████████████████████████████████████████████████████████████████████████████████| 2/2 [00:13<00:00,  6.90s/it]
+Original distribution: {'Good': 9689, 'Standard': 14591, 'Bad': 7588}
+Balanced validation per class: 1500  (total 4500)
+Label distribution (val true): Counter({'Good': 1500, 'Standard': 1500, 'Bad': 1500})
+Label distribution (val pred): Counter({'Good': 2655, 'Bad': 1728, 'Standard': 117})
+Accuracy: 0.6471
+Macro F1: 0.5463
+
+Classification Report: y_true, y_pred...
+              precision    recall  f1-score   support
+
+         Bad     0.7975    0.9187    0.8538      1500
+        Good     0.5544    0.9813    0.7085      1500
+    Standard     0.5299    0.0413    0.0767      1500
+
+    accuracy                         0.6471      4500
+   macro avg     0.6273    0.6471    0.5463      4500
+weighted avg     0.6273    0.6471    0.5463      4500
+
+Confusion Matrix: Good, Standard, Bad...
+[[1472   18   10]
+ [1098   62  340]
+ [  85   37 1378]]
+
+
+
+
+
+ (llm) aniket@MSI:~/distill_slm$ python eval_creditmix.py --model_dir runs/creditmix_kd --data data/creditmix_dataset.json --val_per_class 1500
+Loading checkpoint shards: 100%|██████████████████████████████████████████████████████████████████████████████████████████████| 2/2 [00:44<00:00, 22.32s/it]
+Original distribution: {'Good': 9689, 'Standard': 14591, 'Bad': 7588}
+Balanced validation per class: 1500  (total 4500)
+Label distribution (val true): Counter({'Good': 1500, 'Standard': 1500, 'Bad': 1500})
+Label distribution (val pred): Counter({'Good': 2439, 'Bad': 1288, 'Standard': 773})
+Accuracy: 0.4280
+Macro F1: 0.4031
+
+Classification Report: y_true, y_pred...
+              precision    recall  f1-score   support
+
+         Bad     0.4930    0.4233    0.4555      1500
+        Good     0.4211    0.6847    0.5215      1500
+    Standard     0.3415    0.1760    0.2323      1500
+
+    accuracy                         0.4280      4500
+   macro avg     0.4185    0.4280    0.4031      4500
+weighted avg     0.4185    0.4280    0.4031      4500
+
+Confusion Matrix: Good, Standard, Bad...
+[[1027  243  230]
+ [ 813  264  423]
+ [ 599  266  635]]
+
+
+
+
+
+ (llm) aniket@MSI:~/distill_slm$ CUDA_LAUNCH_BLOCKING=1 python eval_creditmix.py --model_dir runs/creditmix_dpo --data data/creditmix_dataset.json --val_per_
+class 1500
+Loading checkpoint shards: 100%|██████████████████████████████████████████████████████████████████████████████████████████████| 2/2 [00:10<00:00,  5.21s/it]
+Original distribution: {'Good': 9689, 'Standard': 14591, 'Bad': 7588}
+Balanced validation per class: 1500  (total 4500)
+Label distribution (val true): Counter({'Good': 1500, 'Standard': 1500, 'Bad': 1500})
+Label distribution (val pred): Counter({'Good': 1739, 'Bad': 1729, 'Standard': 1032})
+Accuracy: 0.4931
+Macro F1: 0.4783
+
+Classification Report: y_true, y_pred...
+              precision    recall  f1-score   support
+
+         Bad     0.5570    0.6420    0.5965      1500
+        Good     0.5124    0.5940    0.5502      1500
+    Standard     0.3537    0.2433    0.2883      1500
+
+    accuracy                         0.4931      4500
+   macro avg     0.4743    0.4931    0.4783      4500
+weighted avg     0.4743    0.4931    0.4783      4500
+
+Confusion Matrix: Good, Standard, Bad...
+[[891 353 256]
+ [625 365 510]
+ [223 314 963]]
+(llm) aniket@MSI:~/distill_slm$

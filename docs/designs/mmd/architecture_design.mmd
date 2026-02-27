@@ -1,0 +1,193 @@
+flowchart LR
+  %% Distill SLM Accelerator End to End Architecture 8GB
+
+  %% Users and Inputs
+  U[User CLI and API]
+
+  subgraph DATA[Data Sources]
+    DCM[creditmix_dataset json question to answer]
+    DCSFT[codegen_sft jsonl]
+    DCKD[codegen_kd jsonl]
+    DCDPO[codegen_dpo jsonl]
+    DIDPSFT[idp_sft jsonl document to JSON]
+    DIDPSchema[idp_schema json JSON Schema]
+  end
+
+  %% Environment and Infra
+  subgraph ENV[Environment WSL2 8GB GPU]
+    OS[Ubuntu 24 04 1]
+    GPU[NVIDIA RTX 4060 8GB CUDA 13 0 Driver 581 29]
+    PY[Python 3 12 3]
+    DEPS[transformers peft accelerate bitsandbytes trl fastapi uvicorn datasets scikit learn]
+  end
+
+  %% Data Preparation
+  subgraph PREP[Data Preparation]
+    P1[creditmix_prepare py balance classes and write sft kd dpo jsonl]
+    P1o1[creditmix_sft jsonl]
+    P1o2[creditmix_kd jsonl]
+    P1o3[creditmix_dpo jsonl]
+  end
+
+  %% Base Models
+  subgraph MODELS[Base Student Models]
+    M0[Qwen Qwen2 5 3B Instruct]
+    M1[Qwen Qwen2 5 Coder 3B]
+  end
+
+  %% Training QLoRA
+  subgraph TRAIN[Training QLoRA on 8GB]
+    subgraph QCFG[Quantization and Adapters]
+      BNB[BitsAndBytes 4bit NF4 double quant bfloat16 compute]
+      LORA[LoRA r16 alpha32 dropout0 05 targets q k v o gate up down proj]
+      CKPT[Grad checkpointing grad accumulation per device batch 1]
+    end
+    T_SFT[sft_train py input to output]
+    T_KD[kd_train py input to teacher output]
+    T_DPO[dpo_train py TRL prompt chosen rejected beta 0 1]
+    OUT_SFT[(runs creditmix_sft LoRA adapter)]
+    OUT_KD[(runs creditmix_kd LoRA adapter)]
+    OUT_DPO[(runs creditmix_dpo LoRA adapter)]
+  end
+
+  %% Inference
+  subgraph INFER[Inference]
+    subgraph INFER_CODE[CodeGen]
+      IC[infer_codegen py optional plan then code]
+      ICm[(adapter dirs for codegen)]
+    end
+    subgraph INFER_IDP[IDP]
+      IIDP[infer_idp py schema constrained JSON]
+    end
+    subgraph INFER_CMX[CreditMix Classification]
+      ICMX[infer_creditmix py label ranking and calibration]
+      CT[Chat template assistant turn]
+      LL[Length normalized label log likelihood]
+      PRI[Multi null priors subtract prior]
+      CAL[Calibrated scores argmax]
+    end
+  end
+
+  %% Evaluation
+  subgraph EVAL[Evaluation CreditMix]
+    EV[eval_creditmix py balanced holdout accuracy macro F1 report confusion matrix]
+  end
+
+  %% Serving FastAPI
+  subgraph SERVE[Serving API FastAPI Uvicorn]
+    SV[serve_creditmix py lazy load and cache tokenizer model priors]
+    EP1[POST infer base]
+    EP2[POST infer sft]
+    EP3[POST infer kd]
+    EP4[POST infer dpo]
+    RESP[JSON prediction scores raw_scores prior probabilities top2_margin]
+  end
+
+  %% Storage
+  subgraph STORE[Repository and Artifacts]
+    DATAF[data folder raw and prepared json and jsonl]
+    RUNS[runs folder adapters for creditmix codegen idp]
+    LOGS[metrics confusion matrices training logs]
+  end
+
+  %% Flows
+  U --> DCM
+  U --> DCSFT
+  U --> DCKD
+  U --> DCDPO
+  U --> DIDPSFT
+  U --> DIDPSchema
+
+  DCM --> P1
+  P1 --> P1o1
+  P1 --> P1o2
+  P1 --> P1o3
+  P1o1 --> STORE
+  P1o2 --> STORE
+  P1o3 --> STORE
+
+  P1o1 --> T_SFT
+  P1o2 --> T_KD
+  P1o3 --> T_DPO
+  DCSFT --> T_SFT
+  DCKD --> T_KD
+  DCDPO --> T_DPO
+  DIDPSFT --> T_SFT
+
+  M0 --> T_SFT
+  M0 --> T_KD
+  M0 --> T_DPO
+  M1 --> T_SFT
+  M1 --> T_KD
+  M1 --> T_DPO
+
+  BNB --- T_SFT
+  BNB --- T_KD
+  BNB --- T_DPO
+  LORA --- T_SFT
+  LORA --- T_KD
+  LORA --- T_DPO
+  CKPT --- T_SFT
+  CKPT --- T_KD
+  CKPT --- T_DPO
+
+  T_SFT --> OUT_SFT
+  T_KD --> OUT_KD
+  T_DPO --> OUT_DPO
+  OUT_SFT --> STORE
+  OUT_KD --> STORE
+  OUT_DPO --> STORE
+
+  OUT_KD --> ICm
+  OUT_SFT --> ICm
+  OUT_DPO --> ICm
+  ICm --> IC
+
+  OUT_SFT --> IIDP
+  OUT_KD --> IIDP
+  OUT_DPO --> IIDP
+  DIDPSchema --> IIDP
+
+  OUT_SFT --> ICMX
+  OUT_KD --> ICMX
+  OUT_DPO --> ICMX
+  M0 --> ICMX
+  CT --> LL --> PRI --> CAL
+  ICMX --> CT
+
+  P1o1 --> EV
+  P1o2 --> EV
+  P1o3 --> EV
+  M0 --> EV
+  OUT_SFT --> EV
+  OUT_KD --> EV
+  OUT_DPO --> EV
+  EV --> LOGS
+
+  SV --> EP1
+  SV --> EP2
+  SV --> EP3
+  SV --> EP4
+  EP1 --> RESP
+  EP2 --> RESP
+  EP3 --> RESP
+  EP4 --> RESP
+
+  EP1 --> M0
+  EP2 --> OUT_SFT
+  EP3 --> OUT_KD
+  EP4 --> OUT_DPO
+  SV --> PRI
+
+  IC --> STORE
+  IIDP --> STORE
+  ICMX --> STORE
+  RESP --> STORE
+
+  OS --> DEPS
+  GPU --> DEPS
+  PY --> DEPS
+  DEPS --> TRAIN
+  DEPS --> INFER
+  DEPS --> EVAL
+  DEPS --> SERVE
